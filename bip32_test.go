@@ -1,10 +1,10 @@
-package bip32_test
+package bip32
 
 import (
 	"encoding/hex"
-	"github.com/stretchr/testify/assert"
-	"github.com/tyler-smith/go-bip32"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testMasterKey struct {
@@ -21,7 +21,7 @@ type testChildKey struct {
 }
 
 func TestBip32TestVectors(t *testing.T) {
-	hStart := bip32.FirstHardenedChild
+	hStart := FirstHardenedChild
 
 	vector1 := testMasterKey{
 		seed:    "000102030405060708090a0b0c0d0e0f",
@@ -98,7 +98,7 @@ func testVectorKeyPairs(t *testing.T, vector testMasterKey) {
 	seed, _ := hex.DecodeString(vector.seed)
 
 	// Generate a master private and public key
-	privKey, err := bip32.NewMasterKey(seed)
+	privKey, err := NewMasterKey(seed)
 	assert.NoError(t, err)
 
 	pubKey := privKey.PublicKey()
@@ -118,5 +118,13 @@ func testVectorKeyPairs(t *testing.T, vector testMasterKey) {
 		// Assert correctness
 		assert.Equal(t, testChildKey.privKey, privKey.String())
 		assert.Equal(t, testChildKey.pubKey, pubKey.String())
+	}
+}
+
+func TestNewSeed(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		seed, err := NewSeed()
+		assert.NoError(t, err)
+		assert.Equal(t, 256, len(seed))
 	}
 }
