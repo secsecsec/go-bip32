@@ -2,14 +2,19 @@ package bip32
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/ripemd160"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"github.com/cmars/basen"
-	"github.com/mndrix/btcutil"
 	"io"
 	"math/big"
+
+	"code.google.com/p/go.crypto/ripemd160"
+	"github.com/cmars/basen"
+	"github.com/mndrix/btcutil"
+)
+
+const (
+	publicKeyCompressedLength = 33
 )
 
 var (
@@ -90,7 +95,7 @@ func compressPublicKey(x *big.Int, y *big.Int) []byte {
 
 	// Write X coord; Pad the key so x is aligned with the LSB. Pad size is key length - header size (1) - xBytes size
 	xBytes := x.Bytes()
-	for i := 0; i < (PublicKeyCompressedLength - 1 - len(xBytes)); i++ {
+	for i := 0; i < (publicKeyCompressedLength - 1 - len(xBytes)); i++ {
 		key.WriteByte(0x0)
 	}
 	key.Write(xBytes)

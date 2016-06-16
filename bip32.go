@@ -10,19 +10,23 @@ import (
 )
 
 const (
-	FirstHardenedChild        = uint32(0x80000000)
-	PublicKeyCompressedLength = 33
+	// FirstHardenedChild is the index of the first child in the hardened range
+	FirstHardenedChild = uint32(0x80000000)
 )
 
 var (
+	// PrivateWalletVersion is the version string to use for private wallets
 	PrivateWalletVersion, _ = hex.DecodeString("0488ADE4")
-	PublicWalletVersion, _  = hex.DecodeString("0488B21E")
+
+	// PublicWalletVersion is the version string to use for public wallets
+	PublicWalletVersion, _ = hex.DecodeString("0488B21E")
 )
 
-// Represents a bip32 extended key containing key data, chain code, parent information, and other meta data
+// Key is a bip32 extended key containing key data, chain code,
+// parent information, and other meta data
 type Key struct {
 	Version     []byte // 4 bytes
-	Depth       byte   // 1 bytes
+	Depth       byte   // 1 byte
 	ChildNumber []byte // 4 bytes
 	FingerPrint []byte // 4 bytes
 	ChainCode   []byte // 32 bytes
@@ -30,7 +34,7 @@ type Key struct {
 	IsPrivate   bool   // unserialized
 }
 
-// Creates a new master extended key from a seed
+// NewMasterKey creates a new master extended key from a seed
 func NewMasterKey(seed []byte) (*Key, error) {
 	// Generate key and chaincode
 	hmac := hmac.New(sha512.New, []byte("Bitcoin seed"))
@@ -61,7 +65,7 @@ func NewMasterKey(seed []byte) (*Key, error) {
 	return key, nil
 }
 
-// Derives a child key from a given parent as outlined by bip32
+// NewChildKey derives a child key from a given parent
 func (key *Key) NewChildKey(childIdx uint32) (*Key, error) {
 	hardenedChild := childIdx >= FirstHardenedChild
 	childIndexBytes := uint32Bytes(childIdx)
@@ -71,9 +75,9 @@ func (key *Key) NewChildKey(childIdx uint32) (*Key, error) {
 		return nil, errors.New("Can't create hardened child for public key")
 	}
 
-	// Get intermediary to create key and chaincode from
-	// Hardened children are based on the private key
-	// NonHardened children are based on the public key
+	// Get intermediary to create key and chaincode from.
+	// Hardened children are based on the private key.
+	// NonHardened children are based on the public key.
 	var data []byte
 	if hardenedChild {
 		data = append([]byte{0x0}, key.Key...)
@@ -86,7 +90,7 @@ func (key *Key) NewChildKey(childIdx uint32) (*Key, error) {
 	hmac.Write(data)
 	intermediary := hmac.Sum(nil)
 
-	// Create child Key with data common to all both scenarios
+	// Create child Key with data common to both scenarios
 	childKey := &Key{
 		ChildNumber: childIndexBytes,
 		ChainCode:   intermediary[32:],
@@ -94,7 +98,7 @@ func (key *Key) NewChildKey(childIdx uint32) (*Key, error) {
 		IsPrivate:   key.IsPrivate,
 	}
 
-	// Bip32 CKDpriv
+	// bip32 CKDpriv
 	if key.IsPrivate {
 		childKey.Version = PrivateWalletVersion
 		childKey.FingerPrint = hash160(publicKeyForPrivateKey(key.Key))[:4]
@@ -105,25 +109,28 @@ func (key *Key) NewChildKey(childIdx uint32) (*Key, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Bip32 CKDpub
-	} else {
-		keyBytes := publicKeyForPrivateKey(intermediary[:32])
 
-		// Validate key
-		err := validateChildPublicKey(keyBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		childKey.Version = PublicWalletVersion
-		childKey.FingerPrint = hash160(key.Key)[:4]
-		childKey.Key = addPublicKeys(keyBytes, key.Key)
+		return childKey, nil
 	}
+
+	// bip32 CKDpub
+	keyBytes := publicKeyForPrivateKey(intermediary[:32])
+
+	// Validate key
+	err := validateChildPublicKey(keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	childKey.Version = PublicWalletVersion
+	childKey.FingerPrint = hash160(key.Key)[:4]
+	childKey.Key = addPublicKeys(keyBytes, key.Key)
 
 	return childKey, nil
 }
 
-// Create public version of key or return a copy; 'Neuter' function from the bip32 spec
+// PublicKey creates a public version of key or returns a copy
+// It is the 'Neuter' function from the bip32 spec
 func (key *Key) PublicKey() *Key {
 	keyBytes := key.Key
 
@@ -142,7 +149,7 @@ func (key *Key) PublicKey() *Key {
 	}
 }
 
-// Serialized an Key to a 78 byte byte slice
+// Serialize serializes the Key into a 78 byte byte slice
 func (key *Key) Serialize() []byte {
 	// Private keys should be prepended with a single null byte
 	keyBytes := key.Key
@@ -170,9 +177,8 @@ func (key *Key) String() string {
 	return string(base58Encode(key.Serialize()))
 }
 
-// Cryptographically secure seed
+// NewSeed creates a 256 byte slice of cryptographically random data
 func NewSeed() ([]byte, error) {
-	// Well that easy, just make go read 256 random bytes into a slice
 	s := make([]byte, 256)
 	_, err := rand.Read([]byte(s))
 	return s, err
