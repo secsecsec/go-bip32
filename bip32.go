@@ -172,9 +172,14 @@ func (key *Key) Serialize() []byte {
 	return serializedKey
 }
 
-// Encode the Key in the standard Bitcoin base58 encoding
-func (key *Key) String() string {
+// SerializeBase58 encodes the key as a serialized base58 string
+func (key *Key) SerializeBase58() string {
 	return string(base58Encode(key.Serialize()))
+}
+
+// String implements the Stringer interface by returning SerializeBase58
+func (key *Key) String() string {
+	return key.SerializeBase58()
 }
 
 // NewSeed creates a 256 byte slice of cryptographically random data
