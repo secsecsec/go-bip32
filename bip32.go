@@ -7,11 +7,15 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"fmt"
 )
 
 const (
 	// FirstHardenedChild is the index of the first child in the hardened range
 	FirstHardenedChild = uint32(0x80000000)
+
+	// SerializedKeyLength is the length of a serialized key in bytes
+	SerializedKeyLength = 78
 )
 
 var (
@@ -20,6 +24,12 @@ var (
 
 	// PublicWalletVersion is the version string to use for public wallets
 	PublicWalletVersion, _ = hex.DecodeString("0488B21E")
+)
+
+var (
+	ErrUnserializeInvalidLength = errors.New("Serialized keys must be exactly 78 bytes")
+	ErrPublicKeyNotOnCurve      = errors.New("Public key does not exist on the secp256k1 curve")
+	ErrPrivateKeyNoNULLByte     = errors.New("Private key has no NULL byte")
 )
 
 // Key is a bip32 extended key containing key data, chain code,
@@ -38,7 +48,7 @@ type Key struct {
 func NewMasterKey(seed []byte) (*Key, error) {
 	// Generate key and chaincode
 	hmac := hmac.New(sha512.New, []byte("Bitcoin seed"))
-	hmac.Write([]byte(seed))
+	hmac.Write(seed)
 	intermediary := hmac.Sum(nil)
 
 	// Split it into our key and chain code
@@ -166,15 +176,68 @@ func (key *Key) Serialize() []byte {
 	buffer.Write(key.ChainCode)
 	buffer.Write(keyBytes)
 
-	// Append the standard doublesha256 checksum
-	serializedKey := addChecksumToBytes(buffer.Bytes())
-
-	return serializedKey
+	return buffer.Bytes()
 }
 
 // SerializeBase58 encodes the key as a serialized base58 string
 func (key *Key) SerializeBase58() string {
-	return string(base58Encode(key.Serialize()))
+	return base58Encode(key.Serialize())
+}
+
+func (key *Key) Unserialize(bytes []byte) error {
+	// Validate length
+	if len(bytes) != SerializedKeyLength {
+		return ErrUnserializeInvalidLength
+	}
+
+	// Reconstruct Key
+	key.Version = bytes[0:4]
+	key.Depth = bytes[4]
+	key.FingerPrint = bytes[5:9]
+	key.ChildNumber = bytes[9:13]
+	key.ChainCode = bytes[13:45]
+	key.Key = bytes[45:78]
+
+	// Handle private key. Set IsPrivate and remove NULL byte
+	if bytesAreEqual(key.Version, PrivateWalletVersion) {
+		key.IsPrivate = true
+
+		if key.Key[0] != byte(0) {
+			return ErrPrivateKeyNoNULLByte
+		}
+
+		key.Key = key.Key[1:]
+	}
+
+	// If it's a private key we're done
+	if !bytesAreEqual(key.Version, PublicWalletVersion) {
+		key.IsPrivate = true
+		return nil
+	}
+
+	// Validate public key exists on curve
+	if !curve.IsOnCurve(expandPublicKey(key.Key)) {
+		fmt.Println("key:", key.Key)
+		fmt.Println(expandPublicKey(key.Key))
+		return ErrPublicKeyNotOnCurve
+	}
+
+	return nil
+}
+
+func UnserializeBase58(encoded string) (*Key, error) {
+	bytes, err := base58Decode(encoded)
+	if err != nil {
+		return nil, err
+	}
+
+	key := &Key{}
+	err = key.Unserialize(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
 }
 
 // String implements the Stringer interface by returning SerializeBase58

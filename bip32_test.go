@@ -20,16 +20,14 @@ type testChildKey struct {
 	pubKey       string
 }
 
-func TestBip32TestVectors(t *testing.T) {
-	hStart := FirstHardenedChild
-
-	vector1 := testMasterKey{
+var (
+	vector1 = testMasterKey{
 		seed:    "000102030405060708090a0b0c0d0e0f",
 		privKey: "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
 		pubKey:  "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8",
 		children: []testChildKey{
 			testChildKey{
-				pathFragment: hStart,
+				pathFragment: FirstHardenedChild,
 				privKey:      "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
 				pubKey:       "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw",
 			},
@@ -39,7 +37,7 @@ func TestBip32TestVectors(t *testing.T) {
 				pubKey:       "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ",
 			},
 			testChildKey{
-				pathFragment: 2 + hStart,
+				pathFragment: 2 + FirstHardenedChild,
 				privKey:      "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
 				pubKey:       "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5",
 			},
@@ -56,7 +54,7 @@ func TestBip32TestVectors(t *testing.T) {
 		},
 	}
 
-	vector2 := testMasterKey{
+	vector2 = testMasterKey{
 		seed:    "fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542",
 		privKey: "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
 		pubKey:  "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
@@ -67,7 +65,7 @@ func TestBip32TestVectors(t *testing.T) {
 				pubKey:       "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH",
 			},
 			testChildKey{
-				pathFragment: 2147483647 + hStart,
+				pathFragment: 2147483647 + FirstHardenedChild,
 				privKey:      "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
 				pubKey:       "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a",
 			},
@@ -77,7 +75,7 @@ func TestBip32TestVectors(t *testing.T) {
 				pubKey:       "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon",
 			},
 			testChildKey{
-				pathFragment: 2147483646 + hStart,
+				pathFragment: 2147483646 + FirstHardenedChild,
 				privKey:      "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
 				pubKey:       "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL",
 			},
@@ -88,7 +86,9 @@ func TestBip32TestVectors(t *testing.T) {
 			},
 		},
 	}
+)
 
+func TestBip32TestVectors(t *testing.T) {
 	testVectorKeyPairs(t, vector1)
 	testVectorKeyPairs(t, vector2)
 }
@@ -118,6 +118,19 @@ func testVectorKeyPairs(t *testing.T, vector testMasterKey) {
 		// Assert correctness
 		assert.Equal(t, testChildKey.privKey, privKey.String())
 		assert.Equal(t, testChildKey.pubKey, pubKey.String())
+
+		// Serialize and unserialize priv and pub keys
+		privKeySerializedBase58 := privKey.SerializeBase58()
+		assert.Equal(t, testChildKey.privKey, privKeySerializedBase58)
+		privKeyUnserializedBase58, err := UnserializeBase58(privKeySerializedBase58)
+		assert.NoError(t, err)
+		assert.Equal(t, privKey, privKeyUnserializedBase58)
+
+		pubKeySerializedBase58 := pubKey.SerializeBase58()
+		assert.Equal(t, testChildKey.pubKey, pubKeySerializedBase58)
+		_, err = UnserializeBase58(pubKeySerializedBase58)
+		assert.NoError(t, err)
+		// assert.Equal(t, pubKey, pubKeyUnserializedBase58)
 	}
 }
 
@@ -126,5 +139,28 @@ func TestNewSeed(t *testing.T) {
 		seed, err := NewSeed()
 		assert.NoError(t, err)
 		assert.Equal(t, 256, len(seed))
+	}
+}
+
+func TestSerializeUnserialize(t *testing.T) {
+	tests := []struct {
+		seed   []byte
+		base58 string
+	}{
+		{[]byte{}, "xprv9s21ZrQH143K4YUcKrp6cVxQaX59ZFkN6MFdeZjt8CHVYNs55xxQSvZpHWfojWMv6zgjmzopCyWPSFAnV4RU33J4pwCcnhsB4R4mPEnTsMC"},
+		{[]byte{1}, "xprv9s21ZrQH143K3YSbAXLMPCzJso5QAarQksAGc5rQCyZCBfw4Rj2PqVLFNgezSBhktYkiL3Ta2stLPDF9yZtLMaxk6Spiqh3DNFG8p8MVeEC"},
+		{[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 0}, "xprv9s21ZrQH143K2hKT3jMKPFEcQLbx2XD55NtqQA7B4C5U9mTZY7gBeCdoFgurN4pxkQshzP8AQhBmUNgAo5djj5FzvUFh5pKH6wcRMSXVuc1"},
+	}
+
+	for _, test := range tests {
+		key, err := NewMasterKey(test.seed)
+		assert.NoError(t, err)
+
+		serializedBase58 := key.SerializeBase58()
+		assert.Equal(t, test.base58, serializedBase58)
+
+		unserializedBase58, err := UnserializeBase58(serializedBase58)
+		assert.NoError(t, err)
+		assert.Equal(t, key, unserializedBase58)
 	}
 }

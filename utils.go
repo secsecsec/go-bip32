@@ -21,6 +21,8 @@ var (
 	curve                 = btcutil.Secp256k1()
 	curveParams           = curve.Params()
 	BitcoinBase58Encoding = basen.NewEncoding("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+
+	ErrInvalidBase58Checksum = errors.New("The checksum is invalid")
 )
 
 //
@@ -51,17 +53,37 @@ func hash160(data []byte) []byte {
 // Encoding
 //
 
-func checksum(data []byte) []byte {
+func calculateChecksum(data []byte) []byte {
 	return hashDoubleSha256(data)[:4]
 }
 
 func addChecksumToBytes(data []byte) []byte {
-	checksum := checksum(data)
+	checksum := calculateChecksum(data)
 	return append(data, checksum...)
 }
 
-func base58Encode(data []byte) []byte {
-	return []byte(BitcoinBase58Encoding.EncodeToString(data))
+func validateChecksum(data []byte) ([]byte, bool) {
+	givenChecksum := data[len(data)-4:]
+	data = data[:len(data)-4]
+	return data, bytesAreEqual(givenChecksum, calculateChecksum(data))
+}
+
+func base58Encode(data []byte) string {
+	return BitcoinBase58Encoding.EncodeToString(addChecksumToBytes(data))
+}
+
+func base58Decode(encoded string) ([]byte, error) {
+	bytes, err := BitcoinBase58Encoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+
+	newBytes, valid := validateChecksum(bytes)
+	if !valid {
+		return nil, ErrInvalidBase58Checksum
+	}
+
+	return newBytes, nil
 }
 
 // Keys
@@ -122,7 +144,8 @@ func expandPublicKey(key []byte) (*big.Int, *big.Int) {
 	// sqrt(n) = n^((q+1)/4) if q = 3 mod 4
 	Y.Exp(ySquared, qPlus1Div4, curveParams.P)
 
-	if uint32(key[0])%2 == 0 {
+	// if uint32(key[0])%2 == 0 {
+	if uint32(key[0]) == 2 {
 		Y.Sub(curveParams.P, Y)
 	}
 
@@ -149,10 +172,32 @@ func validateChildPublicKey(key []byte) error {
 }
 
 //
-// Numerical
+// Byte management
 //
 func uint32Bytes(i uint32) []byte {
 	bytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(bytes, i)
 	return bytes
+}
+
+func bytesAreEqual(a, b []byte) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
